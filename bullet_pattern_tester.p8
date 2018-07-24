@@ -95,54 +95,93 @@ end
 btn_was_pressed_times = 0
 btn_is_pressed = false
 
-function handle_controls()
-  -- todo: don't let it go below zero
-  -- todo: enhance into an actual menu of items to increase/decrease; up/down goes through menu items (frequency/grouping count/burst), left/right changes value
-  btn_is_pressed = false
-
-  if (btn(0)) then
-    if btn_was_pressed_times == 0 or btn_was_pressed_times > 30 then
-      max_counter += 1
-    end
-    btn_is_pressed = true
-  end
-
-  if (btn(1)) then
-    if btn_was_pressed_times == 0 or btn_was_pressed_times > 30 then
-      max_counter -= 1
-    end
-    btn_is_pressed = true
-  end
-
-  if (btn(2)) then
-    if btn_was_pressed_times == 0 or btn_was_pressed_times > 30 then
-      pattern += 1
-      if (pattern > #patterns) then
-        pattern = 1
+menu_cursor = {
+  sprite = 5,
+  x = 4,
+  y = 4,
+  width = 6,
+  height = 7,
+  update = function(self)
+    btn_is_pressed = false
+    if (btn(2)) then
+      if btn_was_pressed_times == 0 or btn_was_pressed_times > 30 then
+        self.y -= self.height
+        if (self.y < 4) then
+          self.y = 4
+        end
       end
+      btn_is_pressed = true
     end
-    btn_is_pressed = true
-  end
 
-  if (btn(3)) then
-    if btn_was_pressed_times == 0 or btn_was_pressed_times > 30 then
-      pattern -= 1
+    if (btn(3)) then
+      if btn_was_pressed_times == 0 or btn_was_pressed_times > 30 then
+        self.y += self.height
+        if (self.y >= (self.height * 2 + 4)) then
+          self.y = (self.height * 2 + 4)
+        end
+      end
+      btn_is_pressed = true
     end
-    if (pattern < 1) then
-      pattern = #patterns
-    end
-    btn_is_pressed = true
-  end
 
-  if btn_is_pressed == true then
-    btn_was_pressed_times += 1
-  else
-    btn_was_pressed_times = 0
+    if (btn(1)) then
+      if btn_was_pressed_times == 0 or btn_was_pressed_times > 30 then
+        if menu_cursor.y == 4 then
+          max_counter += 1
+        elseif menu_cursor.y == 11 then
+          max_cluster_count += 1
+        elseif menu_cursor.y == 18 then
+          pattern += 1
+          if (pattern > #patterns) then
+            pattern = 1
+          end
+        end
+      end
+      btn_is_pressed = true
+    end
+
+    if (btn(0)) then
+      if btn_was_pressed_times == 0 or btn_was_pressed_times > 30 then
+        if menu_cursor.y == 4 then
+          max_counter -= 1
+        elseif menu_cursor.y == 11 then
+          max_cluster_count -= 1
+        elseif menu_cursor.y == 18 then
+          pattern -= 1
+          if (pattern <= 0) then
+            pattern = #patterns
+          end
+        end
+      end
+      btn_is_pressed = true
+    end
+
+    if btn_is_pressed == true then
+      btn_was_pressed_times += 1
+    else
+      btn_was_pressed_times = 0
+    end
+  end,
+  draw = function(self)
+    spr(self.sprite, self.x, self.y)
   end
-end
+}
+
+-- function handle_menu_item_value_change()
+--   -- todo: don't let it go below zero
+--   btn_is_pressed = false
+
+
+
+--   if btn_is_pressed == true then
+--     btn_was_pressed_times += 1
+--   else
+--     btn_was_pressed_times = 0
+--   end
+-- end
 
 function _update60()
-  handle_controls()
+  menu_cursor:update()
+  -- handle_menu_item_value_change()
 
   -- todo: change counter to loop through 60 frames, make different var for frequency?
   counter += 1
@@ -164,19 +203,30 @@ end
 function _draw()
   cls()
 
-	for bullet in all(bullets) do
+
+
+  for bullet in all(bullets) do
     bullet:draw()
   end
 
-  print('bullets: ' .. count(bullets), 6, 6)
-  print('counter: ' .. counter, 6, 12)
-  print('loop on: ' .. max_counter, 6, 18)
-  print('cluster count: ' .. max_cluster_count, 6, 24)
-  print('pattern: ' .. patterns[pattern], 6, 30)
+  -- print('bullets: ' .. count(bullets), 12, 5)
+  -- print('counter: ' .. counter, 12, 12)
+  print('loop on: ' .. max_counter, 12, 5)
+  print('cluster count: ' .. max_cluster_count, 12, 12)
+  print('pattern: ' .. patterns[pattern], 12, 19)
 
-  print('button is pressed: ' .. (btn_is_pressed and 'true' or 'false'), 6, 36)
-  print('button was pressed: ' .. btn_was_pressed_times, 6, 42)
+  print('fps: ' .. stat(7), 95, 6)
 
-  print ('fps: ' .. stat(7), 95, 6)
+  menu_cursor:draw()
   rect(0, 0, 127, 127)
 end
+
+__gfx__
+0000000000000000000a0000000c00000a0000000aaa000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000000000000000000aaa00000ccc000aaa00000aaaaa00000000000000000000000000000000000000000000000000000000000000000000000000000000000
+007007000000000000aaa00000ccc000aa700000aa7aa00000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00077000000000000aa7aa000cc7cc00aa700000aaa7a00000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00077000000000000aaa7a000ccc7c00aaa00000aaa7a00000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00700700000000000aaa7a000ccc7c0099900000aaaaa00000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000aaaaa000ccccc00000000009999900000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000000000000099999000ddddd00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
