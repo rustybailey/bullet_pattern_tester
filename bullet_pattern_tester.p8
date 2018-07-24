@@ -7,7 +7,7 @@ function make_bullet(x, y, angle, color)
     x = x + .5,
     y = y + .5,
     r = 2,
-    speed = .5,
+    speed = 1,
     angle = angle,
     color = color,
     update = function(self)
@@ -27,13 +27,36 @@ bullets = {}
 
 -- todo: rename to grouping?
 -- todo: add pulse/burst frequency
--- todo: add grouping types: single, cross, spread shot, arc, semi-circle, circle
-function make_cluster(number, color)
+function make_radial_cluster(number, color)
   local full_deg = 360
   local increment = full_deg/number
   for i=increment, full_deg, increment do
     add(bullets, make_bullet(64, 64, i, color))
   end
+end
+
+function make_arc_cluster(number, color)
+  local full_deg = 90
+  local increment = 180/number
+  for i=-90, full_deg, increment do
+    add(bullets, make_bullet(64, 64, i, color))
+  end
+end
+
+function make_spread_shot(number, color)
+  add(bullets, make_bullet(64, 64, 0, color))
+  add(bullets, make_bullet(64, 64, 10, color))
+  add(bullets, make_bullet(64, 64, -10, color))
+end
+
+function make_cross_cluster(number, color)
+  add(bullets, make_bullet(64, 64, 0, color))
+  add(bullets, make_bullet(64, 64, 90, color))
+  add(bullets, make_bullet(64, 64, -90, color))
+end
+
+function make_single_shot(number, color)
+  add(bullets, make_bullet(64, 64, 0, color))
 end
 
 counter = 1
@@ -75,7 +98,7 @@ function _update60()
     if (color > max_color) then
       color = 1
     end
-    make_cluster(max_cluster_count, color)
+    make_arc_cluster(max_cluster_count, color)
   end
 
   for bullet in all(bullets) do
@@ -86,7 +109,6 @@ end
 function _draw()
   cls()
 
-  rect(0, 0, 127, 127, 8)
 	for bullet in all(bullets) do
     bullet:draw()
   end
@@ -95,4 +117,7 @@ function _draw()
   print('counter: ' .. counter, 6, 12)
   print('loop on: ' .. max_counter, 6, 18)
   print('cluster count: ' .. max_cluster_count, 6, 24)
+
+  print ('fps: ' .. stat(7), 95, 6)
+  rect(0, 0, 127, 127)
 end
