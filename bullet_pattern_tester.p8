@@ -27,70 +27,54 @@ bullets = {}
 
 -- todo: rename to grouping?
 -- todo: add pulse/burst frequency
-function make_radial_cluster(number, color)
-  local full_deg = 360
-  local increment = full_deg/number
-  for i=increment, full_deg, increment do
-    add(bullets, make_bullet(64, 64, i, color))
-  end
+function make_bullet_pattern(number, color, current_pattern)
+  patterns[current_pattern]:make_wave(number, color)
 end
-
-function make_arc_cluster(number, color)
-  local full_deg = 90
-  local increment = 180/number
-  for i=-90, full_deg, increment do
-    add(bullets, make_bullet(64, 64, i, color))
-  end
-end
-
-function make_spreadshot(color)
-  add(bullets, make_bullet(64, 64, 0, color))
-  add(bullets, make_bullet(64, 64, 10, color))
-  add(bullets, make_bullet(64, 64, -10, color))
-end
-
-function make_cross_cluster(color)
-  add(bullets, make_bullet(64, 64, 0, color))
-  add(bullets, make_bullet(64, 64, 90, color))
-  add(bullets, make_bullet(64, 64, -90, color))
-end
-
-function make_single_shot(color)
-  add(bullets, make_bullet(64, 64, 0, color))
-end
-
-function make_bullet_pattern(number, color, pattern)
-  if (pattern == 1) then
-    make_single_shot(color)
-  elseif (pattern == 2) then
-    make_cross_cluster(color)
-  elseif (pattern == 3) then
-    make_spreadshot(color)
-  elseif (pattern == 4) then
-    make_arc_cluster(number, color)
-  elseif (pattern == 5) then
-    make_radial_cluster(number, color)
-  end
-end
-
-counter = 1
-color = 1
-pattern = 1
 
 patterns = {
-  'single',
-  'cross',
-  'spreadshot',
-  'arc',
-  'radial'
+  {
+    name = 'single',
+    make_wave = function(self, number, color)
+      add(bullets, make_bullet(64, 64, 0, color))
+    end
+  },
+  {
+    name = 'cross',
+    make_wave = function(self, number, color)
+      add(bullets, make_bullet(64, 64, 0, color))
+      add(bullets, make_bullet(64, 64, 90, color))
+      add(bullets, make_bullet(64, 64, -90, color))
+    end
+  },
+  {
+    name = 'spreadshot',
+    make_wave = function(self, number, color)
+      add(bullets, make_bullet(64, 64, 0, color))
+      add(bullets, make_bullet(64, 64, 10, color))
+      add(bullets, make_bullet(64, 64, -10, color))
+    end
+  },
+  {
+    name = 'arc',
+    make_wave = function(self, number, color)
+      local full_deg = 90
+      local increment = 180/number
+      for i=-90, full_deg, increment do
+        add(bullets, make_bullet(64, 64, i, color))
+      end
+    end
+  },
+  {
+    name = 'radial',
+    make_wave = function(self, number, color)
+      local full_deg = 360
+      local increment = full_deg/number
+      for i=increment, full_deg, increment do
+        add(bullets, make_bullet(64, 64, i, color))
+      end
+    end
+  }
 }
-
-max_counter = 10
-max_cluster_count = 20
-max_color = 15
-
-function _init()
-end
 
 menu = {
   current_selection = 1,
@@ -111,7 +95,7 @@ menu = {
         max_counter += 1
       end,
       draw = function(self, x, y)
-        print('loop on: ' .. max_counter, x, y)
+        print('loop on: ' .. max_counter, x, y, text_color)
       end
     },
     {
@@ -126,25 +110,25 @@ menu = {
         max_cluster_count += 1
       end,
       draw = function(self, x, y)
-        print('cluster count: ' .. max_cluster_count, x, y)
+        print('cluster count: ' .. max_cluster_count, x, y, text_color)
       end
     },
     {
       name = "pattern",
       decrement = function(self)
-        pattern -= 1
-        if (pattern <= 0) then
-          pattern = #patterns
+        current_pattern -= 1
+        if (current_pattern <= 0) then
+          current_pattern = #patterns
         end
       end,
       increment = function(self)
-        pattern += 1
-        if (pattern > #patterns) then
-          pattern = 1
+        current_pattern += 1
+        if (current_pattern > #patterns) then
+          current_pattern = 1
         end
       end,
       draw = function(self, x, y)
-        print('pattern: ' .. patterns[pattern], x, y)
+        print('pattern: ' .. patterns[current_pattern].name, x, y, text_color)
       end
     },
   },
@@ -217,6 +201,17 @@ menu_cursor = {
   end
 }
 
+function _init()
+  counter = 1
+  current_color = 1
+  current_pattern = 1
+  text_color = 9
+
+  max_counter = 10
+  max_cluster_count = 20
+  colors_dark_to_light = {1,2,5,4,8,3,13,14,12,9,6,11,15,7,10}
+end
+
 function _update60()
   menu:update()
 
@@ -224,12 +219,12 @@ function _update60()
   counter += 1
   if (counter > max_counter) then
     counter = 1
-    color += 1
-    if (color > max_color) then
-      color = 1
+    current_color += 1
+    if (current_color > #colors_dark_to_light) then
+      current_color = 1
     end
 
-    make_bullet_pattern(max_cluster_count, color, pattern)
+    make_bullet_pattern(max_cluster_count, colors_dark_to_light[current_color], current_pattern)
   end
 
   for bullet in all(bullets) do
@@ -244,10 +239,10 @@ function _draw()
     bullet:draw()
   end
 
-  print('fps: ' .. stat(7), 95, 5)
+  print('fps: ' .. stat(7), 95, 5, text_color)
 
   menu:draw()
-  rect(0, 0, 127, 127)
+  rect(0, 0, 127, 127, text_color)
 end
 
 __gfx__
