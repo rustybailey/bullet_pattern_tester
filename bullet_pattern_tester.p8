@@ -85,103 +85,140 @@ patterns = {
   'radial'
 }
 
-max_counter = 30
-max_cluster_count = 16
+max_counter = 10
+max_cluster_count = 20
 max_color = 15
 
 function _init()
 end
 
-btn_was_pressed_times = 0
-btn_is_pressed = false
+menu = {
+  current_selection = 1,
+  x = 4,
+  y = 5,
+  btn_is_pressed = false,
+  btn_was_pressed_times = 0,
+  menu_items = {
+    {
+      name = "loop",
+      decrement = function(self)
+        max_counter -= 1
+        if (max_counter < 1) then
+          max_counter = 1
+        end
+      end,
+      increment = function(self)
+        max_counter += 1
+      end,
+      draw = function(self, x, y)
+        print('loop on: ' .. max_counter, x, y)
+      end
+    },
+    {
+      name = "cluster",
+      decrement = function(self)
+        max_cluster_count -= 1
+        if (max_cluster_count < 1) then
+          max_cluster_count = 1
+        end
+      end,
+      increment = function(self)
+        max_cluster_count += 1
+      end,
+      draw = function(self, x, y)
+        print('cluster count: ' .. max_cluster_count, x, y)
+      end
+    },
+    {
+      name = "pattern",
+      decrement = function(self)
+        pattern -= 1
+        if (pattern <= 0) then
+          pattern = #patterns
+        end
+      end,
+      increment = function(self)
+        pattern += 1
+        if (pattern > #patterns) then
+          pattern = 1
+        end
+      end,
+      draw = function(self, x, y)
+        print('pattern: ' .. patterns[pattern], x, y)
+      end
+    },
+  },
+  update = function(self)
+    self.btn_is_pressed = false
+    if (btn(2)) then
+      if self.btn_was_pressed_times == 0 or self.btn_was_pressed_times > 30 then
+        self.current_selection -= 1
+        if (self.current_selection < 1) then
+          self.current_selection = #self.menu_items
+        end
+      end
+      self.btn_is_pressed = true
+    end
+
+    if (btn(3)) then
+      if self.btn_was_pressed_times == 0 or self.btn_was_pressed_times > 30 then
+        self.current_selection += 1
+        if (self.current_selection > #self.menu_items) then
+          self.current_selection = 1
+        end
+      end
+      self.btn_is_pressed = true
+    end
+
+    if (btn(1)) then
+      if self.btn_was_pressed_times == 0 or self.btn_was_pressed_times > 30 then
+        self.menu_items[self.current_selection]:increment()
+      end
+      self.btn_is_pressed = true
+    end
+
+    if (btn(0)) then
+      if self.btn_was_pressed_times == 0 or self.btn_was_pressed_times > 30 then
+        self.menu_items[self.current_selection]:decrement()
+      end
+      self.btn_is_pressed = true
+    end
+
+    if self.btn_is_pressed == true then
+      self.btn_was_pressed_times += 1
+    else
+      self.btn_was_pressed_times = 0
+    end
+
+    menu_cursor:update()
+  end,
+  draw = function(self)
+    for i, item in pairs(self.menu_items) do
+      local x = menu_cursor.width + ((menu_cursor.x - 1) * 2)
+      local y = (i - 1) * menu_cursor.height + menu_cursor.y_offset + 1
+      item:draw(x, y)
+    end
+    menu_cursor:draw()
+  end
+}
 
 menu_cursor = {
   sprite = 5,
   x = 4,
+  y_offset = 4,
   y = 4,
   width = 6,
   height = 7,
   update = function(self)
-    btn_is_pressed = false
-    if (btn(2)) then
-      if btn_was_pressed_times == 0 or btn_was_pressed_times > 30 then
-        self.y -= self.height
-        if (self.y < 4) then
-          self.y = 4
-        end
-      end
-      btn_is_pressed = true
-    end
-
-    if (btn(3)) then
-      if btn_was_pressed_times == 0 or btn_was_pressed_times > 30 then
-        self.y += self.height
-        if (self.y >= (self.height * 2 + 4)) then
-          self.y = (self.height * 2 + 4)
-        end
-      end
-      btn_is_pressed = true
-    end
-
-    if (btn(1)) then
-      if btn_was_pressed_times == 0 or btn_was_pressed_times > 30 then
-        if menu_cursor.y == 4 then
-          max_counter += 1
-        elseif menu_cursor.y == 11 then
-          max_cluster_count += 1
-        elseif menu_cursor.y == 18 then
-          pattern += 1
-          if (pattern > #patterns) then
-            pattern = 1
-          end
-        end
-      end
-      btn_is_pressed = true
-    end
-
-    if (btn(0)) then
-      if btn_was_pressed_times == 0 or btn_was_pressed_times > 30 then
-        if menu_cursor.y == 4 then
-          max_counter -= 1
-        elseif menu_cursor.y == 11 then
-          max_cluster_count -= 1
-        elseif menu_cursor.y == 18 then
-          pattern -= 1
-          if (pattern <= 0) then
-            pattern = #patterns
-          end
-        end
-      end
-      btn_is_pressed = true
-    end
-
-    if btn_is_pressed == true then
-      btn_was_pressed_times += 1
-    else
-      btn_was_pressed_times = 0
-    end
+    self.y = (menu.current_selection - 1) * self.height + self.y_offset
   end,
   draw = function(self)
     spr(self.sprite, self.x, self.y)
   end
 }
 
--- function handle_menu_item_value_change()
---   -- todo: don't let it go below zero
---   btn_is_pressed = false
-
-
-
---   if btn_is_pressed == true then
---     btn_was_pressed_times += 1
---   else
---     btn_was_pressed_times = 0
---   end
--- end
-
 function _update60()
-  menu_cursor:update()
-  -- handle_menu_item_value_change()
+  menu:update()
 
   -- todo: change counter to loop through 60 frames, make different var for frequency?
   counter += 1
@@ -203,21 +240,13 @@ end
 function _draw()
   cls()
 
-
-
   for bullet in all(bullets) do
     bullet:draw()
   end
 
-  -- print('bullets: ' .. count(bullets), 12, 5)
-  -- print('counter: ' .. counter, 12, 12)
-  print('loop on: ' .. max_counter, 12, 5)
-  print('cluster count: ' .. max_cluster_count, 12, 12)
-  print('pattern: ' .. patterns[pattern], 12, 19)
+  print('fps: ' .. stat(7), 95, 5)
 
-  print('fps: ' .. stat(7), 95, 6)
-
-  menu_cursor:draw()
+  menu:draw()
   rect(0, 0, 127, 127)
 end
 
