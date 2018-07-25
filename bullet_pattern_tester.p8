@@ -36,8 +36,6 @@ end
 bullets = {}
 bullet_types = { 'square', 'circle', 'sprite' }
 
--- todo: rename to grouping?
--- todo: add pulse/burst frequency
 function make_bullet_pattern(number, color, current_pattern)
   patterns[current_pattern]:make_wave(number, color)
 end
@@ -96,6 +94,7 @@ menu = {
   menu_items = {
     {
       name = "loop",
+      disabled = false,
       decrement = function(self)
         max_counter -= 1
         if (max_counter < 1) then
@@ -111,6 +110,7 @@ menu = {
     },
     {
       name = "cluster",
+      disabled = true,
       decrement = function(self)
         max_cluster_count -= 1
         if (max_cluster_count < 1) then
@@ -121,11 +121,16 @@ menu = {
         max_cluster_count += 1
       end,
       draw = function(self, x, y)
-        print('cluster count: ' .. max_cluster_count, x, y, text_color)
+        local color = text_color
+        if (self.disabled) then
+          color = 1
+        end
+        print('cluster count: ' .. max_cluster_count, x, y, color)
       end
     },
     {
       name = "pulse",
+      disabled = false,
       decrement = function(self)
         pulse -= 1
         if (pulse < 0) then
@@ -145,6 +150,7 @@ menu = {
     },
     {
       name = "bullet type",
+      disabled = false,
       decrement = function(self)
         current_bullet_type -= 1
         if (current_bullet_type <= 0) then
@@ -163,16 +169,26 @@ menu = {
     },
     {
       name = "pattern",
+      disabled = false,
       decrement = function(self)
         current_pattern -= 1
         if (current_pattern <= 0) then
           current_pattern = #patterns
         end
+        self:toggle_cluster_count()
       end,
       increment = function(self)
         current_pattern += 1
         if (current_pattern > #patterns) then
           current_pattern = 1
+        end
+        self:toggle_cluster_count()
+      end,
+      toggle_cluster_count = function(self)
+        if (patterns[current_pattern].name == 'arc' or patterns[current_pattern].name == 'radial') then
+          menu.menu_items[2].disabled = false
+        else
+          menu.menu_items[2].disabled = true
         end
       end,
       draw = function(self, x, y)
@@ -188,6 +204,9 @@ menu = {
         if (self.current_selection < 1) then
           self.current_selection = #self.menu_items
         end
+        if (self.menu_items[self.current_selection].disabled) then
+          self.current_selection -= 1
+        end
       end
       self.btn_is_pressed = true
     end
@@ -197,6 +216,9 @@ menu = {
         self.current_selection += 1
         if (self.current_selection > #self.menu_items) then
           self.current_selection = 1
+        end
+        if (self.menu_items[self.current_selection].disabled) then
+          self.current_selection += 1
         end
       end
       self.btn_is_pressed = true
