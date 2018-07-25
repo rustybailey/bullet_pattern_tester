@@ -19,11 +19,22 @@ function make_bullet(x, y, angle, color)
       end
     end,
     draw = function(self)
-      rectfill(self.x, self.y, self.x + 1, self.y + 1, self.color)
+      if (current_bullet_type == 1) then
+        rectfill(self.x, self.y, self.x + 1, self.y + 1, self.color)
+      end
+
+      if (current_bullet_type == 2) then
+        circfill(self.x, self.y, self.r, self.color)
+      end
+
+      if (current_bullet_type == 3) then
+        spr(6, self.x - 3, self.y - 3)
+      end
     end
   }
 end
 bullets = {}
+bullet_types = { 'square', 'circle', 'sprite' }
 
 -- todo: rename to grouping?
 -- todo: add pulse/burst frequency
@@ -111,6 +122,43 @@ menu = {
       end,
       draw = function(self, x, y)
         print('cluster count: ' .. max_cluster_count, x, y, text_color)
+      end
+    },
+    {
+      name = "pulse",
+      decrement = function(self)
+        pulse -= 1
+        if (pulse < 0) then
+          pulse = 0
+        end
+        pulse_count = 0
+        pulse_off = false
+      end,
+      increment = function(self)
+        pulse += 1
+        pulse_count = 0
+        pulse_off = false
+      end,
+      draw = function(self, x, y)
+        print('pulse: ' .. pulse, x, y, text_color)
+      end
+    },
+    {
+      name = "bullet type",
+      decrement = function(self)
+        current_bullet_type -= 1
+        if (current_bullet_type <= 0) then
+          current_bullet_type = #bullet_types
+        end
+      end,
+      increment = function(self)
+        current_bullet_type += 1
+        if (current_bullet_type > #bullet_types) then
+          current_bullet_type = 1
+        end
+      end,
+      draw = function(self, x, y)
+        print('bullet type: ' .. bullet_types[current_bullet_type], x, y, text_color)
       end
     },
     {
@@ -202,29 +250,45 @@ menu_cursor = {
 }
 
 function _init()
+  version = 'v1.0'
+
   counter = 1
   current_color = 1
   current_pattern = 1
+
   text_color = 9
 
+  pulse = 0
+  pulse_count = 0
+  pulse_off = false
   max_counter = 10
   max_cluster_count = 20
   colors_dark_to_light = {1,2,5,4,8,3,13,14,12,9,6,11,15,7,10}
+  colors_light_to_dark = {10,7,15,11,6,9,12,14,13,3,8,4,5,2,1}
+  current_bullet_type = 1
 end
 
 function _update60()
   menu:update()
 
-  -- todo: change counter to loop through 60 frames, make different var for frequency?
   counter += 1
   if (counter > max_counter) then
     counter = 1
-    current_color += 1
-    if (current_color > #colors_dark_to_light) then
-      current_color = 1
+    pulse_count += 1
+    if (pulse_count == pulse) then
+      pulse_off = not pulse_off
+      pulse_count = 0
     end
 
-    make_bullet_pattern(max_cluster_count, colors_dark_to_light[current_color], current_pattern)
+    if (not pulse_off) then
+      current_color += 1
+
+      if (current_color > #colors_light_to_dark) then
+        current_color = 1
+      end
+
+      make_bullet_pattern(max_cluster_count, colors_light_to_dark[current_color], current_pattern)
+    end
   end
 
   for bullet in all(bullets) do
@@ -239,18 +303,19 @@ function _draw()
     bullet:draw()
   end
 
-  print('fps: ' .. stat(7), 95, 5, text_color)
+  print(version, 127 - (#version * 4) - 4, 4, text_color)
+  print('fps: ' .. stat(7), 95, 11, text_color)
 
   menu:draw()
   rect(0, 0, 127, 127, text_color)
 end
 
 __gfx__
-0000000000000000000a0000000c00000a0000000aaa000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-000000000000000000aaa00000ccc000aaa00000aaaaa00000000000000000000000000000000000000000000000000000000000000000000000000000000000
-007007000000000000aaa00000ccc000aa700000aa7aa00000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00077000000000000aa7aa000cc7cc00aa700000aaa7a00000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00077000000000000aaa7a000ccc7c00aaa00000aaa7a00000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00700700000000000aaa7a000ccc7c0099900000aaaaa00000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000000000000000a0000000c00000a0000000aaa000004444000000000000000000000000000000000000000000000000000000000000000000000000000
+000000000000000000aaa00000ccc000aaa00000aaaaa00044474400000000000000000000000000000000000000000000000000000000000000000000000000
+007007000000000000aaa00000ccc000aa700000aa7aa00044447400000000000000000000000000000000000000000000000000000000000000000000000000
+00077000000000000aa7aa000cc7cc00aa700000aaa7a00044447400000000000000000000000000000000000000000000000000000000000000000000000000
+00077000000000000aaa7a000ccc7c00aaa00000aaa7a00044444400000000000000000000000000000000000000000000000000000000000000000000000000
+00700700000000000aaa7a000ccc7c0099900000aaaaa00004444000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000aaaaa000ccccc00000000009999900000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000099999000ddddd00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
