@@ -4,7 +4,7 @@ __lua__
 -- bullet pattern tester
 -- by rusty bailey
 
-function make_bullet(x, y, angle, color)
+function make_bullet(x, y, angle, color, type)
   return {
     x = x + .5,
     y = y + .5,
@@ -12,6 +12,7 @@ function make_bullet(x, y, angle, color)
     speed = 1,
     angle = angle,
     color = color,
+    type = type,
     update = function(self)
       self.x += self.speed * sin(self.angle/360)
       self.y += self.speed * cos(self.angle/360)
@@ -21,15 +22,15 @@ function make_bullet(x, y, angle, color)
       end
     end,
     draw = function(self)
-      if (current_bullet_type == 1) then
+      if (self.type == 1) then
         rectfill(self.x, self.y, self.x + 1, self.y + 1, self.color)
       end
 
-      if (current_bullet_type == 2) then
+      if (self.type == 2) then
         circfill(self.x, self.y, self.r, self.color)
       end
 
-      if (current_bullet_type == 3) then
+      if (self.type == 3) then
         spr(6, self.x - 3, self.y - 3)
       end
     end
@@ -46,23 +47,23 @@ patterns = {
   {
     name = 'single',
     make_wave = function(self, number, color)
-      add(bullets, make_bullet(64, 64, 0, color))
+      add(bullets, make_bullet(64, 64, 0, color, current_bullet_type))
     end
   },
   {
     name = 'cross',
     make_wave = function(self, number, color)
-      add(bullets, make_bullet(64, 64, 0, color))
-      add(bullets, make_bullet(64, 64, 90, color))
-      add(bullets, make_bullet(64, 64, -90, color))
+      add(bullets, make_bullet(64, 64, 0, color, current_bullet_type))
+      add(bullets, make_bullet(64, 64, 90, color, current_bullet_type))
+      add(bullets, make_bullet(64, 64, -90, color, current_bullet_type))
     end
   },
   {
     name = 'spreadshot',
     make_wave = function(self, number, color)
-      add(bullets, make_bullet(64, 64, 0, color))
-      add(bullets, make_bullet(64, 64, 10, color))
-      add(bullets, make_bullet(64, 64, -10, color))
+      add(bullets, make_bullet(64, 64, 0, color, current_bullet_type))
+      add(bullets, make_bullet(64, 64, 10, color, current_bullet_type))
+      add(bullets, make_bullet(64, 64, -10, color, current_bullet_type))
     end
   },
   {
@@ -71,7 +72,7 @@ patterns = {
       local full_deg = 90
       local increment = 180/number
       for i=-90, full_deg, increment do
-        add(bullets, make_bullet(64, 64, i, color))
+        add(bullets, make_bullet(64, 64, i, color, current_bullet_type))
       end
     end
   },
@@ -81,7 +82,7 @@ patterns = {
       local full_deg = 360
       local increment = full_deg/number
       for i=increment, full_deg, increment do
-        add(bullets, make_bullet(64, 64, i, color))
+        add(bullets, make_bullet(64, 64, i, color, current_bullet_type))
       end
     end
   }
