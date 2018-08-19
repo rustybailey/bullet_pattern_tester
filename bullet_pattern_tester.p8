@@ -1,6 +1,8 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
+-- bullet pattern tester
+-- by rusty bailey
 
 function make_bullet(x, y, angle, color)
   return {
