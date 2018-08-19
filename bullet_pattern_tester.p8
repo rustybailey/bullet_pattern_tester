@@ -327,11 +327,11 @@ function _draw()
     bullet:draw()
   end
 
+  -- print stats
   local max_width = 128
   local margin = 5
   local letter_width = 4
   local letter_height = 7
-
   local mem = "mem: " .. flr(stat(0))
   local cpu_stat = flr(stat(1) * 100)
   if cpu_stat < 10 then
@@ -349,11 +349,6 @@ function _draw()
       text_color
     )
   end
-  -- print(version, max_width - (#version * letter_width) - margin, margin, text_color)
-  -- print(mem, max_width - (#mem * letter_width) - margin, margin + letter_height * 1, text_color)
-  -- print(cpu, max_width - (#cpu * letter_width) - margin, margin + letter_height * 2, text_color)
-  -- print(fps, max_width - (#fps * letter_width) - margin, margin + letter_height * 3, text_color)
-  -- line(0, 4, 127, 4, 15)
 
   menu:draw()
   rect(0, 0, 127, 127, text_color)
