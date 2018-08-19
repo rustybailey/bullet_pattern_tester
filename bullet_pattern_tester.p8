@@ -91,7 +91,6 @@ menu = {
   current_selection = 1,
   x = 4,
   y = 5,
-  btn_is_pressed = false,
   btn_was_pressed_times = 0,
   menu_items = {
     {
@@ -199,54 +198,59 @@ menu = {
     },
   },
   update = function(self)
-    self.btn_is_pressed = false
-    if (btn(2)) then
-      if self.btn_was_pressed_times == 0 or self.btn_was_pressed_times > 30 then
+    -- menu controls could have been handled by native btnp,
+    -- but i didn't like how slow it was when you held down
+    -- the button, so i wrote my own method
+
+    -- up
+    if self:btnp(2) then
+      self.current_selection -= 1
+      if (self.current_selection < 1) then
+        self.current_selection = #self.menu_items
+      end
+      if (self.menu_items[self.current_selection].disabled) then
         self.current_selection -= 1
-        if (self.current_selection < 1) then
-          self.current_selection = #self.menu_items
-        end
-        if (self.menu_items[self.current_selection].disabled) then
-          self.current_selection -= 1
-        end
       end
-      self.btn_is_pressed = true
     end
 
-    if (btn(3)) then
-      if self.btn_was_pressed_times == 0 or self.btn_was_pressed_times > 30 then
+    -- down
+    if self:btnp(3) then
+      self.current_selection += 1
+      if (self.current_selection > #self.menu_items) then
+        self.current_selection = 1
+      end
+      if (self.menu_items[self.current_selection].disabled) then
         self.current_selection += 1
-        if (self.current_selection > #self.menu_items) then
-          self.current_selection = 1
-        end
-        if (self.menu_items[self.current_selection].disabled) then
-          self.current_selection += 1
-        end
       end
-      self.btn_is_pressed = true
     end
 
-    if (btn(1)) then
-      if self.btn_was_pressed_times == 0 or self.btn_was_pressed_times > 30 then
-        self.menu_items[self.current_selection]:increment()
-      end
-      self.btn_is_pressed = true
+    -- left
+    if self:btnp(0) then
+      self.menu_items[self.current_selection]:decrement()
     end
 
-    if (btn(0)) then
-      if self.btn_was_pressed_times == 0 or self.btn_was_pressed_times > 30 then
-        self.menu_items[self.current_selection]:decrement()
-      end
-      self.btn_is_pressed = true
+    -- right
+    if self:btnp(1) then
+      self.menu_items[self.current_selection]:increment()
     end
 
-    if self.btn_is_pressed == true then
+    -- keep track of # times btn is pressed
+    self:count_btn_presses()
+
+    menu_cursor:update()
+  end,
+  btnp = function(self, button_number)
+    return btn(button_number) and self:should_handle_btn_press()
+  end,
+  should_handle_btn_press = function(self)
+    return self.btn_was_pressed_times == 0 or self.btn_was_pressed_times > 30
+  end,
+  count_btn_presses = function(self)
+    if btn(0) or btn(1) or btn(2) or btn(3) then
       self.btn_was_pressed_times += 1
     else
       self.btn_was_pressed_times = 0
     end
-
-    menu_cursor:update()
   end,
   draw = function(self)
     for i, item in pairs(self.menu_items) do
