@@ -294,10 +294,18 @@ function _init()
   colors_dark_to_light = {1,2,5,4,8,3,13,14,12,9,6,11,15,7,10}
   colors_light_to_dark = {10,7,15,11,6,9,12,14,13,3,8,4,5,2,1}
   current_bullet_type = 1
+  show_ui = true
 end
 
 function _update60()
+  if btnp(4) then
+    show_ui = not show_ui
+  end
+  if btnp(5) then
+    _init()
+  end
   menu:update()
+
 
   counter += 1
   if (counter > max_counter) then
@@ -331,30 +339,32 @@ function _draw()
     bullet:draw()
   end
 
-  -- print stats
-  local max_width = 128
-  local margin = 5
-  local letter_width = 4
-  local letter_height = 7
-  local mem = "mem: " .. flr(stat(0))
-  local cpu_stat = flr(stat(1) * 100)
-  if cpu_stat < 10 then
-    cpu_stat = " " .. cpu_stat
-  end
-  local cpu = "cpu: " .. cpu_stat
-  local fps = "fps: " .. stat(7)
-  local stats = { version, mem, cpu, fps }
+  if (show_ui) then
+    -- print stats
+    local max_width = 128
+    local margin = 5
+    local letter_width = 4
+    local letter_height = 7
+    local mem = "mem: " .. flr(stat(0))
+    local cpu_stat = flr(stat(1) * 100)
+    if cpu_stat < 10 then
+      cpu_stat = " " .. cpu_stat
+    end
+    local cpu = "cpu: " .. cpu_stat
+    local fps = "fps: " .. stat(7)
+    local stats = { version, mem, cpu, fps }
 
-  for i = 1, #stats do
-    print(
-      stats[i],
-      max_width - (#stats[i] * letter_width) - margin,
-      margin + (letter_height * (i - 1)),
-      text_color
-    )
-  end
+    for i = 1, #stats do
+      print(
+        stats[i],
+        max_width - (#stats[i] * letter_width) - margin,
+        margin + (letter_height * (i - 1)),
+        text_color
+      )
+    end
 
-  menu:draw()
+    menu:draw()
+  end
   rect(0, 0, 127, 127, text_color)
 end
 
