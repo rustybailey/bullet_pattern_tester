@@ -47,14 +47,14 @@ function make_attack_pattern(x, y, pattern, loop_number, cluster_count, pulse, b
     y = y,
     counter = 0,
     current_color = 1,
-    pattern = 1,
-    loop_number = 10,
-    cluster_count = 20,
-    pulse = 0,
+    pattern = pattern,
+    loop_number = loop_number,
+    cluster_count = cluster_count,
+    pulse = pulse,
     pulse_count = 0,
     pulse_off = false,
     colors_light_to_dark = {10,7,15,11,6,9,12,14,13,3,8,4,5,2,1},
-    bullet_type = 1,
+    bullet_type = bullet_type,
     bullets = {},
     make_wave = function(self, color)
       -- single
@@ -135,7 +135,7 @@ function make_attack_pattern(x, y, pattern, loop_number, cluster_count, pulse, b
     end
   }
 end
-attack = make_attack_pattern(64, 64)
+attack = make_attack_pattern(64, 64, 1, 10, 20, 0, 1)
 
 bullet_types = {
   'square',
@@ -270,7 +270,7 @@ menu = {
     attack.loop_number = 10
     attack.cluster_count = 20
     attack.pulse = 0
-    bullet_type = 0
+    attack.bullet_type = 1
   end,
   update = function(self)
     -- menu controls could have been handled by native btnp,
@@ -367,7 +367,27 @@ function _update60()
     _init()
   end
   attack:update()
-  menu:update()
+
+  if (show_ui) then
+    menu:update()
+  else
+    -- if the menu is hidden, then you can move the attack pattern
+    if btn(0) then
+      attack.x -= 1
+    end
+
+    if btn(1) then
+      attack.x += 1
+    end
+
+    if btn(2) then
+      attack.y -= 1
+    end
+
+    if btn(3) then
+      attack.y += 1
+    end
+  end
 end
 
 function _draw()
