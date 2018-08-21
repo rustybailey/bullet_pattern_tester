@@ -41,7 +41,7 @@ function make_bullet(bullets, x, y, angle, color, type)
   add(bullets, bullet)
 end
 
-function make_attack_pattern(x, y, pattern, loop_number, cluster_count, pulse, bullet_type)
+function make_attack_pattern(x, y, pattern, loop_number, cluster_count, pulse, bullet_type, rotate_speed)
   return {
     x = x,
     y = y,
@@ -56,31 +56,33 @@ function make_attack_pattern(x, y, pattern, loop_number, cluster_count, pulse, b
     colors_light_to_dark = {10,7,15,11,6,9,12,14,13,3,8,4,5,2,1},
     bullet_type = bullet_type,
     bullets = {},
+    rotate_counter = 0,
+    rotate_speed = rotate_speed,
     make_wave = function(self, color)
       -- single
       if self.pattern == 1 then
-        make_bullet(self.bullets, self.x, self.y, 0, color, self.bullet_type)
+        make_bullet(self.bullets, self.x, self.y, 0 + self.rotate_counter, color, self.bullet_type)
       end
 
       -- cross
       if self.pattern == 2 then
-        make_bullet(self.bullets, self.x, self.y, 0, color, self.bullet_type)
-        make_bullet(self.bullets, self.x, self.y, 90, color, self.bullet_type)
-        make_bullet(self.bullets, self.x, self.y, -90, color, self.bullet_type)
+        make_bullet(self.bullets, self.x, self.y, 0 + self.rotate_counter, color, self.bullet_type)
+        make_bullet(self.bullets, self.x, self.y, 90 + self.rotate_counter, color, self.bullet_type)
+        make_bullet(self.bullets, self.x, self.y, -90 + self.rotate_counter, color, self.bullet_type)
       end
 
       -- spreadshot
       if self.pattern == 3 then
-        make_bullet(self.bullets, self.x, self.y, 0, color, self.bullet_type)
-        make_bullet(self.bullets, self.x, self.y, 10, color, self.bullet_type)
-        make_bullet(self.bullets, self.x, self.y, -10, color, self.bullet_type)
+        make_bullet(self.bullets, self.x, self.y, 0 + self.rotate_counter, color, self.bullet_type)
+        make_bullet(self.bullets, self.x, self.y, 10 + self.rotate_counter, color, self.bullet_type)
+        make_bullet(self.bullets, self.x, self.y, -10 + self.rotate_counter, color, self.bullet_type)
       end
 
       -- cone
       if self.pattern == 4 then
         local full_deg = 45
         local increment = (full_deg * 2)/(self.cluster_count - 1)
-        for i=-full_deg, full_deg, increment do
+        for i=-full_deg + self.rotate_counter, full_deg + self.rotate_counter, increment do
           make_bullet(self.bullets, self.x, self.y, i, color, self.bullet_type)
         end
       end
@@ -89,23 +91,28 @@ function make_attack_pattern(x, y, pattern, loop_number, cluster_count, pulse, b
       if self.pattern == 5 then
         local full_deg = 90
         local increment = (full_deg * 2)/(self.cluster_count - 1)
-        for i=-full_deg, full_deg, increment do
+        for i=-full_deg + self.rotate_counter, full_deg + self.rotate_counter, increment do
           make_bullet(self.bullets, self.x, self.y, i, color, self.bullet_type)
         end
       end
 
       -- radial
       if self.pattern == 6 then
-        local full_deg = 360
-        local increment = full_deg/self.cluster_count
-        for i=increment, full_deg, increment do
+        local full_deg = 180
+        local increment = (full_deg * 2)/(self.cluster_count)
+        for i=-full_deg + self.rotate_counter, full_deg + self.rotate_counter, increment do
           make_bullet(self.bullets, self.x, self.y, i, color, self.bullet_type)
         end
       end
     end,
     update = function(self)
+      -- if (self.rotate_speed < 0) then
+        self.rotate_counter += self.rotate_speed
+      -- end
+
       self.counter += 1
       if (self.counter > self.loop_number) then
+
         self.counter = 1
         self.pulse_count += 1
         if (self.pulse_count == self.pulse) then
@@ -135,7 +142,7 @@ function make_attack_pattern(x, y, pattern, loop_number, cluster_count, pulse, b
     end
   }
 end
-attack = make_attack_pattern(64, 64, 1, 10, 20, 0, 1)
+attack = make_attack_pattern(64, 64, 1, 10, 20, 0, 1, 0)
 
 bullet_types = {
   'square',
@@ -213,6 +220,19 @@ menu = {
       end
     },
     {
+      name = "rotate",
+      disabled = false,
+      decrement = function(self)
+        attack.rotate_speed -= 1
+      end,
+      increment = function(self)
+        attack.rotate_speed += 1
+      end,
+      draw = function(self, x, y)
+        print('rotate: ' .. attack.rotate_speed, x, y, text_color)
+      end
+    },
+    {
       name = "bullet type",
       disabled = false,
       decrement = function(self)
@@ -271,6 +291,8 @@ menu = {
     attack.cluster_count = 20
     attack.pulse = 0
     attack.bullet_type = 1
+    attack.rotate_counter = 0
+    attack.rotate_speed = 0
   end,
   update = function(self)
     -- menu controls could have been handled by native btnp,
