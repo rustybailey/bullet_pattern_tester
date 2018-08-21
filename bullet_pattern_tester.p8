@@ -89,9 +89,9 @@ patterns = {
 }
 
 menu = {
-  current_selection = 1,
   x = 4,
   y = 5,
+  current_selection = 1,
   btn_was_pressed_times = 0,
   menu_items = {
     {
@@ -198,6 +198,11 @@ menu = {
       end
     },
   },
+  init = function(self)
+    self.current_selection = 1
+    self.btn_was_pressed_times = 0
+    self.menu_items[2].disabled = true
+  end,
   update = function(self)
     -- menu controls could have been handled by native btnp,
     -- but i didn't like how slow it was when you held down
@@ -296,6 +301,8 @@ function _init()
   colors_light_to_dark = {10,7,15,11,6,9,12,14,13,3,8,4,5,2,1}
   current_bullet_type = 1
   show_ui = true
+
+  menu:init()
 end
 
 function _update60()
