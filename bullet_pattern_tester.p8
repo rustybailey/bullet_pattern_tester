@@ -131,12 +131,12 @@ function make_attack_pattern(x, y, pattern, loop_number, cluster_count, pulse, b
         end
       end
 
-      for bullet in all(self.bullets) do
+      for key, bullet in pairs(self.bullets) do
         bullet:update()
       end
     end,
     draw = function(self)
-      for bullet in all(self.bullets) do
+      for key, bullet in pairs(self.bullets) do
         bullet:draw()
       end
     end
