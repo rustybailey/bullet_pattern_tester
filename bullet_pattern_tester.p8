@@ -4,8 +4,8 @@ __lua__
 -- bullet pattern tester
 -- by rusty bailey
 
-function make_bullet(x, y, angle, color, type)
-  return {
+function make_bullet(bullets, x, y, angle, color, type)
+  local bullet = {
     x = x + .5,
     y = y + .5,
     r = 2,
@@ -22,72 +22,134 @@ function make_bullet(x, y, angle, color, type)
       end
     end,
     draw = function(self)
+      -- square
       if (self.type == 1) then
         rectfill(self.x, self.y, self.x + 1, self.y + 1, self.color)
       end
 
+      -- circle
       if (self.type == 2) then
         circfill(self.x, self.y, self.r, self.color)
       end
 
+      -- sprite
       if (self.type == 3) then
         spr(6, self.x - 3, self.y - 3)
       end
     end
   }
-end
-bullets = {}
-bullet_types = { 'square', 'circle', 'sprite' }
-
-function make_bullet_pattern(number, color, current_pattern)
-  patterns[current_pattern]:make_wave(number, color)
+  add(bullets, bullet)
 end
 
-patterns = {
-  {
-    name = 'single',
-    make_wave = function(self, number, color)
-      add(bullets, make_bullet(64, 64, 0, color, current_bullet_type))
-    end
-  },
-  {
-    name = 'cross',
-    make_wave = function(self, number, color)
-      add(bullets, make_bullet(64, 64, 0, color, current_bullet_type))
-      add(bullets, make_bullet(64, 64, 90, color, current_bullet_type))
-      add(bullets, make_bullet(64, 64, -90, color, current_bullet_type))
-    end
-  },
-  {
-    name = 'spreadshot',
-    make_wave = function(self, number, color)
-      add(bullets, make_bullet(64, 64, 0, color, current_bullet_type))
-      add(bullets, make_bullet(64, 64, 10, color, current_bullet_type))
-      add(bullets, make_bullet(64, 64, -10, color, current_bullet_type))
-    end
-  },
-  {
-    name = 'arc',
-    make_wave = function(self, number, color)
-      local full_deg = 90
-      local increment = 180/number
-      for i=-90, full_deg, increment do
-        add(bullets, make_bullet(64, 64, i, color, current_bullet_type))
+function make_attack_pattern(x, y, pattern, loop_number, cluster_count, pulse, bullet_type)
+  return {
+    x = x,
+    y = y,
+    counter = 0,
+    current_color = 1,
+    pattern = 1,
+    loop_number = 10,
+    cluster_count = 20,
+    pulse = 0,
+    pulse_count = 0,
+    pulse_off = false,
+    colors_light_to_dark = {10,7,15,11,6,9,12,14,13,3,8,4,5,2,1},
+    bullet_type = 1,
+    bullets = {},
+    make_wave = function(self, color)
+      -- single
+      if self.pattern == 1 then
+        make_bullet(self.bullets, self.x, self.y, 0, color, self.bullet_type)
       end
-    end
-  },
-  {
-    name = 'radial',
-    make_wave = function(self, number, color)
-      local full_deg = 360
-      local increment = full_deg/number
-      for i=increment, full_deg, increment do
-        add(bullets, make_bullet(64, 64, i, color, current_bullet_type))
+
+      -- cross
+      if self.pattern == 2 then
+        make_bullet(self.bullets, self.x, self.y, 0, color, self.bullet_type)
+        make_bullet(self.bullets, self.x, self.y, 90, color, self.bullet_type)
+        make_bullet(self.bullets, self.x, self.y, -90, color, self.bullet_type)
+      end
+
+      -- spreadshot
+      if self.pattern == 3 then
+        make_bullet(self.bullets, self.x, self.y, 0, color, self.bullet_type)
+        make_bullet(self.bullets, self.x, self.y, 10, color, self.bullet_type)
+        make_bullet(self.bullets, self.x, self.y, -10, color, self.bullet_type)
+      end
+
+      -- cone
+      if self.pattern == 4 then
+        local full_deg = 45
+        local increment = (full_deg * 2)/(self.cluster_count - 1)
+        for i=-full_deg, full_deg, increment do
+          make_bullet(self.bullets, self.x, self.y, i, color, self.bullet_type)
+        end
+      end
+
+      -- semi-circle
+      if self.pattern == 5 then
+        local full_deg = 90
+        local increment = (full_deg * 2)/(self.cluster_count - 1)
+        for i=-full_deg, full_deg, increment do
+          make_bullet(self.bullets, self.x, self.y, i, color, self.bullet_type)
+        end
+      end
+
+      -- radial
+      if self.pattern == 6 then
+        local full_deg = 360
+        local increment = full_deg/self.cluster_count
+        for i=increment, full_deg, increment do
+          make_bullet(self.bullets, self.x, self.y, i, color, self.bullet_type)
+        end
+      end
+    end,
+    update = function(self)
+      self.counter += 1
+      if (self.counter > self.loop_number) then
+        self.counter = 1
+        self.pulse_count += 1
+        if (self.pulse_count == self.pulse) then
+          self.pulse_off = not self.pulse_off
+          self.pulse_count = 0
+        end
+
+        if (not self.pulse_off) then
+          self.current_color += 1
+
+          if (self.current_color > #self.colors_light_to_dark) then
+            self.current_color = 1
+          end
+
+          self:make_wave(self.colors_light_to_dark[self.current_color])
+        end
+      end
+
+      for bullet in all(self.bullets) do
+        bullet:update()
+      end
+    end,
+    draw = function(self)
+      for bullet in all(self.bullets) do
+        bullet:draw()
       end
     end
   }
-}
+end
+attack = make_attack_pattern(64, 64)
 
+bullet_types = {
+  'square',
+  'circle',
+  'sprite'
+}
+patterns = {
+  'single',
+  'cross',
+  'spreadshot',
+  'cone',
+  'semi-circle',
+  'radial'
+}
 menu = {
   x = 4,
   y = 5,
@@ -98,103 +160,103 @@ menu = {
       name = "loop",
       disabled = false,
       decrement = function(self)
-        max_counter -= 1
-        if (max_counter < 1) then
-          max_counter = 1
+        attack.loop_number -= 1
+        if (attack.loop_number < 1) then
+          attack.loop_number = 1
         end
       end,
       increment = function(self)
-        max_counter += 1
+        attack.loop_number += 1
       end,
       draw = function(self, x, y)
-        print('loop on: ' .. max_counter, x, y, text_color)
+        print('loop on: ' .. attack.loop_number, x, y, text_color)
       end
     },
     {
       name = "cluster",
       disabled = true,
       decrement = function(self)
-        max_cluster_count -= 1
-        if (max_cluster_count < 1) then
-          max_cluster_count = 1
+        attack.cluster_count -= 1
+        if (attack.cluster_count < 1) then
+          attack.cluster_count = 1
         end
       end,
       increment = function(self)
-        max_cluster_count += 1
+        attack.cluster_count += 1
       end,
       draw = function(self, x, y)
         local color = text_color
         if (self.disabled) then
           color = 1
         end
-        print('cluster count: ' .. max_cluster_count, x, y, color)
+        print('cluster count: ' .. attack.cluster_count, x, y, color)
       end
     },
     {
       name = "pulse",
       disabled = false,
       decrement = function(self)
-        pulse -= 1
-        if (pulse < 0) then
-          pulse = 0
+        attack.pulse -= 1
+        if (attack.pulse < 0) then
+          attack.pulse = 0
         end
-        pulse_count = 0
-        pulse_off = false
+        attack.pulse_count = 0
+        attack.pulse_off = false
       end,
       increment = function(self)
-        pulse += 1
-        pulse_count = 0
-        pulse_off = false
+        attack.pulse += 1
+        attack.pulse_count = 0
+        attack.pulse_off = false
       end,
       draw = function(self, x, y)
-        print('pulse: ' .. pulse, x, y, text_color)
+        print('pulse: ' .. attack.pulse, x, y, text_color)
       end
     },
     {
       name = "bullet type",
       disabled = false,
       decrement = function(self)
-        current_bullet_type -= 1
-        if (current_bullet_type <= 0) then
-          current_bullet_type = #bullet_types
+        attack.bullet_type -= 1
+        if (attack.bullet_type <= 0) then
+          attack.bullet_type = #bullet_types
         end
       end,
       increment = function(self)
-        current_bullet_type += 1
-        if (current_bullet_type > #bullet_types) then
-          current_bullet_type = 1
+        attack.bullet_type += 1
+        if (attack.bullet_type > #bullet_types) then
+          attack.bullet_type = 1
         end
       end,
       draw = function(self, x, y)
-        print('bullet type: ' .. bullet_types[current_bullet_type], x, y, text_color)
+        print('bullet type: ' .. bullet_types[attack.bullet_type], x, y, text_color)
       end
     },
     {
       name = "pattern",
       disabled = false,
       decrement = function(self)
-        current_pattern -= 1
-        if (current_pattern <= 0) then
-          current_pattern = #patterns
+        attack.pattern -= 1
+        if (attack.pattern <= 0) then
+          attack.pattern = #patterns
         end
         self:toggle_cluster_count()
       end,
       increment = function(self)
-        current_pattern += 1
-        if (current_pattern > #patterns) then
-          current_pattern = 1
+        attack.pattern += 1
+        if (attack.pattern > #patterns) then
+          attack.pattern = 1
         end
         self:toggle_cluster_count()
       end,
       toggle_cluster_count = function(self)
-        if (patterns[current_pattern].name == 'arc' or patterns[current_pattern].name == 'radial') then
+        if (patterns[attack.pattern] == 'cone' or patterns[attack.pattern] == 'semi-circle' or patterns[attack.pattern] == 'radial') then
           menu.menu_items[2].disabled = false
         else
           menu.menu_items[2].disabled = true
         end
       end,
       draw = function(self, x, y)
-        print('pattern: ' .. patterns[current_pattern].name, x, y, text_color)
+        print('pattern: ' .. patterns[attack.pattern], x, y, text_color)
       end
     },
   },
@@ -202,6 +264,13 @@ menu = {
     self.current_selection = 1
     self.btn_was_pressed_times = 0
     self.menu_items[2].disabled = true
+    attack.x = 64
+    attack.y = 64
+    attack.pattern = 1
+    attack.loop_number = 10
+    attack.cluster_count = 20
+    attack.pulse = 0
+    bullet_type = 0
   end,
   update = function(self)
     -- menu controls could have been handled by native btnp,
@@ -285,23 +354,8 @@ menu_cursor = {
 
 function _init()
   version = 'v2.0'
-
-  counter = 1
-  current_color = 1
-  current_pattern = 1
-
   text_color = 9
-
-  pulse = 0
-  pulse_count = 0
-  pulse_off = false
-  max_counter = 10
-  max_cluster_count = 20
-  colors_dark_to_light = {1,2,5,4,8,3,13,14,12,9,6,11,15,7,10}
-  colors_light_to_dark = {10,7,15,11,6,9,12,14,13,3,8,4,5,2,1}
-  current_bullet_type = 1
   show_ui = true
-
   menu:init()
 end
 
@@ -312,40 +366,14 @@ function _update60()
   if btnp(5) then
     _init()
   end
+  attack:update()
   menu:update()
-
-
-  counter += 1
-  if (counter > max_counter) then
-    counter = 1
-    pulse_count += 1
-    if (pulse_count == pulse) then
-      pulse_off = not pulse_off
-      pulse_count = 0
-    end
-
-    if (not pulse_off) then
-      current_color += 1
-
-      if (current_color > #colors_light_to_dark) then
-        current_color = 1
-      end
-
-      make_bullet_pattern(max_cluster_count, colors_light_to_dark[current_color], current_pattern)
-    end
-  end
-
-  for bullet in all(bullets) do
-    bullet:update()
-  end
 end
 
 function _draw()
   cls()
 
-  for bullet in all(bullets) do
-    bullet:draw()
-  end
+  attack:draw()
 
   if (show_ui) then
     -- print stats
