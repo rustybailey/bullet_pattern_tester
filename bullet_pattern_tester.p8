@@ -13,6 +13,25 @@ function make_bullet(bullets, x, y, angle, color, type)
     angle = angle,
     color = color,
     type = type,
+    init = function(self)
+      -- square
+      if (self.type == 1) then
+        self.w = 1
+        self.h = 1
+      end
+
+      -- circle
+      if (self.type == 2) then
+        self.w = 4
+        self.h = 4
+      end
+
+      -- sprite
+      if (self.type == 3) then
+        self.w = 6
+        self.h = 6
+      end
+    end,
     update = function(self)
       -- when switching from all() to pairs(), it lowered
       -- the cpu, but then there was a weird jitter when a
@@ -29,7 +48,7 @@ function make_bullet(bullets, x, y, angle, color, type)
     draw = function(self)
       -- square
       if (self.type == 1) then
-        rectfill(self.x, self.y, self.x + 1, self.y + 1, self.color)
+        rectfill(self.x - self.w/2, self.y - self.h/2, self.x + self.w, self.y + self.h, self.color)
       end
 
       -- circle
@@ -39,10 +58,11 @@ function make_bullet(bullets, x, y, angle, color, type)
 
       -- sprite
       if (self.type == 3) then
-        spr(6, self.x - 3, self.y - 3)
+        spr(6, self.x - self.w/2, self.y - self.h/2)
       end
     end
   }
+  bullet:init()
   add(bullets, bullet)
 end
 
