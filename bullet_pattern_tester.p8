@@ -4,6 +4,11 @@ __lua__
 -- bullet pattern tester
 -- by rusty bailey
 
+-- if you want to use this for your own project, all you will need to
+-- copy is make_bullet and make_attack_pattern
+-- then you just need to call the attack pattern's update and draw
+-- function during update and draw.
+
 function make_bullet(bullets, x, y, angle, color, type)
   local bullet = {
     x = x + .5,
@@ -184,8 +189,14 @@ function make_attack_pattern(x, y, pattern, loop_number, cluster_count, pulse, b
     end
   }
 end
+
+-- this is purposely initialized as a global so that menu can access
+-- and alter it's values. you wouldn't normally want to do this.
 attack = make_attack_pattern(64, 64, 1, 10, 20, 0, 1, 0)
 
+-- these two tables of names, the menu and menu_cursor are
+-- only for the purposes of manipulating this demo. they are not
+-- necessary to copy if you just need the bullet code.
 bullet_types = {
   'square',
   'circle',
