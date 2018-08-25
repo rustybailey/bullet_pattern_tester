@@ -60,7 +60,7 @@ function make_bullet(bullets, x, y, angle, color, type)
     draw = function(self)
       -- square
       if (self.type == 1) then
-        rectfill(self.x - self.w/2, self.y - self.h/2, self.x + self.w, self.y + self.h, self.color)
+        rectfill(self.x, self.y, self.x + self.w, self.y + self.h, self.color)
       end
 
       -- circle
