@@ -33,15 +33,10 @@ function make_bullet(bullets, x, y, angle, color, type)
       end
     end,
     update = function(self)
-      -- when switching from all() to pairs(), it lowered
-      -- the cpu, but then there was a weird jitter when a
-      -- bullet would get near the edge of the screen.
-      -- adding a buffer so it removes the bullet outside the screen
-      local buffer = 20
       self.x += self.speed * sin(self.angle/360)
       self.y += self.speed * cos(self.angle/360)
 
-      if (self.x < 0 - buffer or self.x > 128 + buffer or self.y < 0 - buffer or self.y > 128 + buffer) then
+      if (self.x < 0 or self.x > 128 or self.y < 0 or self.y > 128) then
         del(bullets, self)
       end
     end,
@@ -156,7 +151,7 @@ function make_attack_pattern(x, y, pattern, loop_number, cluster_count, pulse, b
         end
       end
 
-      for key, bullet in pairs(self.bullets) do
+      for bullet in all(self.bullets) do
         bullet:update()
       end
     end,
